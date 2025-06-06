@@ -44,4 +44,4 @@ npm run start
 
 - It will contain:
   - 9 users from /api/users
-  - 1 user from /api/users/me
+  - 1 user from /settings
