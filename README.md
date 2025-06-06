@@ -2,6 +2,10 @@
 
 This project reverse-engineers a legacy web application with no public API using Puppeteer and TypeScript. It automates login, fetches the list of users, and retrieves the currently authenticated user, saving the data to a formatted JSON file.
 
+## 📹 Loom Video Demo
+
+👉 [Watch the demo on Loom](https://www.loom.com/share/584167be65df4869b71ff57330bb7426?sid=65e298a2-06c9-4fd1-86da-fe971f16414d)
+
 ## 📂 Features
 
 - Logs in to [challenge.sunvoy.com](https://challenge.sunvoy.com) using Puppeteer
