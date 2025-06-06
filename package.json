@@ -9,5 +9,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "puppeteer": "^24.10.0"
+  },
+  "devDependencies": {
+    "@types/puppeteer": "^5.4.7"
+  }
 }
