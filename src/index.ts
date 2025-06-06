@@ -6,6 +6,14 @@ const BASE_URL = "https://challenge.sunvoy.com"
 const EMAIL = "demo@example.org"
 const PASSWORD = "test"
 const COOKIE_PATH = path.resolve(__dirname, "../cookies.json")
+const USERS_PATH = path.resolve(__dirname, "../users.json")
+
+const keyMapping = {
+  "User ID": "id",
+  "First Name": "firstName",
+  "Last Name": "lastName",
+  Email: "email",
+}
 
 async function saveCookies(page: Page) {
   const cookies = await page.cookies()
@@ -35,28 +43,49 @@ async function login(page: Page) {
   saveCookies(page)
 }
 
-async function fetchInternalAPI(page: Page, endpoint: string, payload?: any) {
-  return await page.evaluate(
-    async (endpoint, payload) => {
-      const res = await fetch(endpoint, {
-        headers: {
-          Accept: "application/json",
-        },
-        method: "POST",
-        ...(payload && { body: payload }),
-      })
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`)
+async function fetchInternalAPI(page: Page, endpoint: string) {
+  return await page.evaluate(async (endpoint) => {
+    const res = await fetch(endpoint, {
+      headers: {
+        Accept: "application/json",
+      },
+      method: "POST",
+    })
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`)
+    }
+    const contentType = res.headers.get("content-type")
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new Error(`Expected JSON response but got ${contentType}`)
+    }
+    return await res.json()
+  }, endpoint)
+}
+
+async function getCurrentUser(page: Page) {
+  await page.goto(`${BASE_URL}/settings`, { waitUntil: "networkidle0" })
+
+  let currentUser: Record<string, string> = {}
+  const result = await page.evaluate((keyMapping) => {
+    const formEle = document.querySelector("form")
+    if (!formEle) return null
+
+    return Array.from(formEle.children).map((ele) => {
+      return {
+        [keyMapping[
+          ele.querySelector("label")?.textContent as keyof typeof keyMapping
+        ]]: ele.querySelector("input")?.value as string,
       }
-      const contentType = res.headers.get("content-type")
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error(`Expected JSON response but got ${contentType}`)
-      }
-      return await res.json()
-    },
-    endpoint,
-    payload
-  )
+    })
+  }, keyMapping)
+
+  if (!result) return null
+
+  result.forEach((user) => {
+    currentUser = { ...currentUser, ...user }
+  })
+
+  return currentUser
 }
 
 async function main() {
@@ -78,7 +107,9 @@ async function main() {
 
   try {
     const users = await fetchInternalAPI(page, `${BASE_URL}/api/users`)
-    await fs.writeFile("users.json", JSON.stringify(users, null, 2))
+    const currentUser = await getCurrentUser(page)
+    const combinedUsers = [...users, currentUser]
+    await fs.writeFile(USERS_PATH, JSON.stringify(combinedUsers, null, 2))
   } catch (error) {
     console.error("Failed to fetch users:", error)
     throw error
