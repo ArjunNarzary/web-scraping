@@ -89,6 +89,7 @@ async function getCurrentUser(page: Page) {
 }
 
 async function main() {
+  console.log("Web scraping started...")
   const browser = await puppeteer.launch()
   const page = await browser.newPage()
 
@@ -100,21 +101,28 @@ async function main() {
   })
 
   if (!isLoggedIn) {
+    console.log("Logging in user...")
     await login(page)
+    console.log("User logged in.")
   }
 
   await page.goto(`${BASE_URL}/list`, { waitUntil: "networkidle0" })
 
   try {
+    console.log("Fetching user list...")
     const users = await fetchInternalAPI(page, `${BASE_URL}/api/users`)
+    console.log("Fetching loggedin user details...")
     const currentUser = await getCurrentUser(page)
     const combinedUsers = [...users, currentUser]
+    console.log("Writting users to file...")
     await fs.writeFile(USERS_PATH, JSON.stringify(combinedUsers, null, 2))
+    console.log("Users list written to file successfully.")
   } catch (error) {
     console.error("Failed to fetch users:", error)
     throw error
   }
 
+  console.log("Check users.json file for the list of users.")
   await browser.close()
 }
 
