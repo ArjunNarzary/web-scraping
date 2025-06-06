@@ -78,7 +78,7 @@ async function main() {
 
   try {
     const users = await fetchInternalAPI(page, `${BASE_URL}/api/users`)
-    console.log("users", users.length)
+    await fs.writeFile("users.json", JSON.stringify(users, null, 2))
   } catch (error) {
     console.error("Failed to fetch users:", error)
     throw error
